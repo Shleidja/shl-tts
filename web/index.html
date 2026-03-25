@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>TTS</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- ========================================== -->
+    <!-- PANNEAU PRINCIPAL TTS -->
+    <!-- ========================================== -->
+    <div id="tts-panel" class="hidden">
+        <div class="tts-container">
+
+            <!-- En-tête (Draggable) -->
+            <div class="tts-header" id="drag-handle">
+                <span class="tts-icon">🔊</span>
+                <span class="tts-title">Chaque voix compte 💓</span>
+
+                <!-- Contrôle de la portée locale -->
+                <button id="btn-voice-range" class="tts-btn-voice" title="Changer la portée de voix">
+                    <span id="voice-mode-name">Normal</span>
+                    <span id="voice-mode-range" class="voice-range-value">7m</span>
+                </button>
+
+                <button id="btn-lock" class="tts-btn-lock" title="Verrouiller la position">🔓</button>
+                <button id="btn-close" class="tts-btn-close">✕</button>
+            </div>
+
+            <!-- Corps Principal (Input) -->
+            <div class="tts-body">
+                <textarea id="tts-input" placeholder="Entrez votre texte ici..." rows="3" maxlength="500"></textarea>
+
+                <div class="tts-meta-row">
+                    <div id="cooldown-bar" class="cooldown-bar hidden">
+                        <div id="cooldown-fill" class="cooldown-fill"></div>
+                        <span id="cooldown-text" class="cooldown-text">0.0s</span>
+                    </div>
+                    <div class="tts-char-count"><span id="char-count">0</span>/500</div>
+                </div>
+
+                <div class="tts-actions">
+                    <button id="btn-send" class="tts-btn tts-btn-send">
+                        <span>▶</span> Lire
+                    </button>
+                    <button id="btn-stop" class="tts-btn tts-btn-stop">
+                        <span>⏹</span> Stop
+                    </button>
+                    <button id="btn-previous" class="tts-btn tts-btn-prev">
+                        <span>↩</span> Précédent
+                    </button>
+                </div>
+            </div>
+
+            <div class="tts-divider"></div>
+
+            <!-- Raccourcis / Soundpad -->
+            <div class="tts-soundpad">
+                <div class="tts-soundpad-header">
+                    <span class="tts-soundpad-title">⚡ Soundpad</span>
+                    <button id="btn-add-preset" class="tts-btn-add">+ Ajouter</button>
+                </div>
+                <div id="soundpad-grid" class="tts-soundpad-grid">
+                    <!-- Généré dynamiquement en JS -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL D'ÉDITION DE PRESET -->
+    <!-- ========================================== -->
+    <div id="preset-modal" class="modal-overlay hidden">
+        <div class="modal-box">
+
+            <div class="modal-header">
+                <span id="modal-title">Nouveau preset</span>
+                <button id="modal-close" class="tts-btn-close">✕</button>
+            </div>
+
+            <div class="modal-body">
+                <label class="modal-label">Nom du bouton</label>
+                <input id="preset-label" type="text" class="modal-input" placeholder="Ex: Salut" maxlength="20">
+
+                <label class="modal-label">Phrase TTS</label>
+                <textarea id="preset-text" class="modal-input" rows="2" placeholder="La phrase qui sera lue..."
+                    maxlength="500"></textarea>
+            </div>
+
+            <div class="modal-actions">
+                <button id="modal-delete" class="tts-btn tts-btn-stop modal-btn-delete hidden">🗑 Supprimer</button>
+                <div class="modal-spacer"></div>
+                <button id="modal-cancel" class="tts-btn tts-btn-prev">Annuler</button>
+                <button id="modal-save" class="tts-btn tts-btn-send">Sauvegarder</button>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>

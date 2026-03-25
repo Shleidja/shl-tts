@@ -1,0 +1,550 @@
+/* ========================================================== */
+/* Reset & Base                                                */
+/* ========================================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: transparent;
+    overflow: hidden;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* ========================================================== */
+/* Panneau Principal TTS                                       */
+/* ========================================================== */
+#tts-panel {
+    position: fixed;
+    z-index: 9999;
+    animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.tts-container {
+    width: 420px;
+    background: rgb(18, 18, 28);
+    background-image: url('bg.png');
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: 60%;
+    border: 1px solid rgba(100, 200, 255, 0.2);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+    position: relative;
+}
+
+.tts-container::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(18, 18, 28, 0.85);
+    z-index: 0;
+    pointer-events: none;
+}
+
+.tts-container > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* ========================================================== */
+/* En-tête (Header)                                            */
+/* ========================================================== */
+.tts-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    background: rgba(100, 200, 255, 0.06);
+    border-bottom: 1px solid rgba(100, 200, 255, 0.1);
+    gap: 8px;
+    cursor: grab;
+    user-select: none;
+}
+
+.tts-header.dragging {
+    cursor: grabbing;
+}
+
+.tts-header.locked {
+    cursor: default;
+}
+
+.tts-icon {
+    font-size: 18px;
+    pointer-events: none;
+}
+
+.tts-title {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    letter-spacing: 0.5px;
+    pointer-events: none;
+}
+
+/* Contrôle Vocale */
+.tts-btn-voice {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(100, 200, 255, 0.08);
+    border: 1px solid rgba(100, 200, 255, 0.15);
+    border-radius: 6px;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(100, 200, 255, 0.85);
+}
+
+.tts-btn-voice:hover {
+    background: rgba(100, 200, 255, 0.18);
+    border-color: rgba(100, 200, 255, 0.3);
+}
+
+.voice-range-value {
+    background: rgba(100, 200, 255, 0.15);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 11px;
+    color: rgba(100, 200, 255, 1);
+}
+
+/* Boutons Fenêtre */
+.tts-btn-lock {
+    background: none;
+    border: none;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: all 0.15s;
+    opacity: 0.4;
+}
+
+.tts-btn-lock:hover {
+    opacity: 0.7;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.tts-btn-lock.is-locked {
+    opacity: 0.9;
+}
+
+.tts-btn-close {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: all 0.15s;
+}
+
+.tts-btn-close:hover {
+    color: rgba(255, 100, 100, 0.9);
+    background: rgba(255, 100, 100, 0.1);
+}
+
+/* ========================================================== */
+/* Corps Principal & Entrée Texte                              */
+/* ========================================================== */
+.tts-body {
+    padding: 16px;
+}
+
+#tts-input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(100, 200, 255, 0.15);
+    border-radius: 8px;
+    padding: 12px;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 14px;
+    font-family: inherit;
+    resize: none;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+#tts-input::placeholder {
+    color: rgba(255, 255, 255, 0.2);
+}
+
+#tts-input:focus {
+    border-color: rgba(100, 200, 255, 0.4);
+}
+
+/* Ligne des Méta Informations */
+.tts-meta-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 6px;
+    margin-bottom: 12px;
+    min-height: 16px;
+}
+
+.tts-char-count {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.2);
+    margin-left: auto;
+}
+
+/* Barre de Temps d'Attente (Cooldown) */
+.cooldown-bar {
+    position: relative;
+    flex: 1;
+    height: 16px;
+    background: rgba(255, 100, 100, 0.08);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-right: 12px;
+    max-width: 200px;
+}
+
+.cooldown-fill {
+    height: 100%;
+    background: rgba(255, 100, 100, 0.35);
+    border-radius: 8px;
+    width: 100%;
+    transition: width 0.1s linear;
+}
+
+.cooldown-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 10px;
+    font-weight: 700;
+    color: rgba(255, 160, 160, 0.9);
+    white-space: nowrap;
+}
+
+/* ========================================================== */
+/* Boutons d'Action (Lire, Stopper, Précédent)                 */
+/* ========================================================== */
+.tts-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.tts-btn {
+    flex: 1;
+    padding: 10px 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.tts-btn span {
+    font-size: 14px;
+}
+
+.tts-btn-send {
+    background: rgba(100, 200, 255, 0.15);
+    color: rgba(100, 200, 255, 0.95);
+    border: 1px solid rgba(100, 200, 255, 0.2);
+}
+
+.tts-btn-send:hover {
+    background: rgba(100, 200, 255, 0.25);
+}
+
+.tts-btn-send.on-cooldown {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.tts-btn-stop {
+    background: rgba(255, 100, 100, 0.12);
+    color: rgba(255, 100, 100, 0.95);
+    border: 1px solid rgba(255, 100, 100, 0.15);
+}
+
+.tts-btn-stop:hover {
+    background: rgba(255, 100, 100, 0.22);
+}
+
+.tts-btn-prev {
+    background: rgba(255, 200, 100, 0.1);
+    color: rgba(255, 200, 100, 0.95);
+    border: 1px solid rgba(255, 200, 100, 0.15);
+}
+
+.tts-btn-prev:hover {
+    background: rgba(255, 200, 100, 0.2);
+}
+
+/* ========================================================== */
+/* Séparateur & Soundpad                                       */
+/* ========================================================== */
+.tts-divider {
+    height: 1px;
+    background: rgba(100, 200, 255, 0.08);
+    margin: 0 16px;
+}
+
+.tts-soundpad {
+    padding: 12px 16px 16px;
+}
+
+.tts-soundpad-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.tts-soundpad-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.45);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.tts-btn-add {
+    background: rgba(100, 255, 150, 0.1);
+    border: 1px solid rgba(100, 255, 150, 0.2);
+    color: rgba(100, 255, 150, 0.85);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.tts-btn-add:hover {
+    background: rgba(100, 255, 150, 0.2);
+}
+
+/* Grille de Presets */
+.tts-soundpad-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-auto-rows: 52px; /* Fixe la hauteur d'un bouton */
+    gap: 6px;
+    max-height: calc(52px * 3 + 6px * 2); /* 3 boutons de haut max + espaces */
+    overflow-y: auto;
+    padding-right: 4px; /* Pour aérer la barre de scroll */
+}
+
+.tts-soundpad-grid::-webkit-scrollbar {
+    width: 4px;
+}
+
+.tts-soundpad-grid::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.tts-soundpad-grid::-webkit-scrollbar-thumb {
+    background: rgba(100, 200, 255, 0.15);
+    border-radius: 2px;
+}
+
+.soundpad-btn {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 10px 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    overflow: hidden;
+    position: relative;
+}
+
+.soundpad-btn:hover {
+    background: rgba(100, 200, 255, 0.1);
+    border-color: rgba(100, 200, 255, 0.25);
+}
+
+.soundpad-btn:active {
+    transform: scale(0.96);
+}
+
+.soundpad-btn-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.soundpad-btn-text {
+    display: block;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Édition de bouton (petit crayon) */
+.soundpad-btn-edit {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.15);
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 3px;
+    transition: all 0.15s;
+    background: none;
+    border: none;
+    line-height: 1;
+}
+
+.soundpad-btn:hover .soundpad-btn-edit {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.soundpad-btn-edit:hover {
+    color: rgba(100, 200, 255, 0.9) !important;
+    background: rgba(100, 200, 255, 0.15);
+}
+
+.soundpad-empty-msg {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 16px;
+    color: rgba(255, 255, 255, 0.2);
+    font-size: 12px;
+}
+
+/* ========================================================== */
+/* Fenêtre Modale (Création/Edition)                           */
+/* ========================================================== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeInModal 0.12s ease-out;
+}
+
+@keyframes fadeInModal {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-box {
+    width: 340px;
+    background: rgb(22, 22, 34);
+    border: 1px solid rgba(100, 200, 255, 0.2);
+    border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+    overflow: hidden;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: rgba(100, 200, 255, 0.06);
+    border-bottom: 1px solid rgba(100, 200, 255, 0.1);
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.modal-body {
+    padding: 16px;
+}
+
+.modal-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    margin-top: 10px;
+}
+
+.modal-label:first-child {
+    margin-top: 0;
+}
+
+.modal-input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(100, 200, 255, 0.15);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    resize: none;
+    transition: border-color 0.2s;
+}
+
+.modal-input::placeholder {
+    color: rgba(255, 255, 255, 0.2);
+}
+
+.modal-input:focus {
+    border-color: rgba(100, 200, 255, 0.4);
+}
+
+.modal-actions {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+    border-top: 1px solid rgba(100, 200, 255, 0.08);
+    align-items: center;
+}
+
+.modal-spacer {
+    flex: 1;
+}
+
+.modal-btn-delete {
+    flex: none !important;
+    padding: 8px 12px !important;
+    font-size: 12px !important;
+}
+
+.modal-actions .tts-btn {
+    flex: none;
+    padding: 8px 16px;
+    font-size: 12px;
+}
