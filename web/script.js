@@ -86,7 +86,14 @@
             source.start(0);
 
             currentAudioSource = source;
-            source.onended = () => { currentAudioSource = null; };
+            source.onended = () => {
+                currentAudioSource = null;
+                fetch(`https://${GetParentResourceName()}/audioEnded`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                }).catch(() => { });
+            };
         } catch (err) {
             console.error('[shl_tts] Erreur lecture audio:', err.message || err);
         }
@@ -112,14 +119,16 @@
 
     function applyPanelPosition() {
         const savedPos = Storage.loadPanelPosition();
+        const getPanelWidth = () => uiPanel.offsetWidth || 450;
+        const getPanelHeight = () => uiPanel.offsetHeight || 420;
         if (savedPos) {
-            const maxX = window.innerWidth - 420;
+            const maxX = window.innerWidth - getPanelWidth();
             const maxY = window.innerHeight - 100;
             uiPanel.style.left = Math.min(Math.max(0, savedPos.x), maxX) + 'px';
             uiPanel.style.top = Math.min(Math.max(0, savedPos.y), maxY) + 'px';
         } else {
-            uiPanel.style.left = ((window.innerWidth - 420) / 2) + 'px';
-            uiPanel.style.top = ((window.innerHeight - 400) / 2) + 'px';
+            uiPanel.style.left = ((window.innerWidth - getPanelWidth()) / 2) + 'px';
+            uiPanel.style.top = ((window.innerHeight - getPanelHeight()) / 2) + 'px';
         }
     }
 

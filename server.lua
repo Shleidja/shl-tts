@@ -3,9 +3,23 @@
 -- ==========================================================
 local TTS_LANG = 'fr'
 
+-- Anti-abus & garde-fous (serveur)
+local COOLDOWN_MS = 2500           -- doit matcher côté client, mais c'est le serveur qui tranche
+local MAX_TEXT_LEN = 250           -- 500 côté NUI, mais on borne pour limiter charge/bande passante
+local MIN_RADIUS = 1.5
+local MAX_RADIUS = 25.0            -- borne "raisonnable" (évite un broadcast serveur-wide)
+
+-- Cache simple pour éviter des requêtes HTTP répétées sur les mêmes phrases
+local CACHE_TTL_MS = 15 * 60 * 1000
+local ttsCache = {}                -- [cacheKey] = { ts = GetGameTimer(), audioBase64 = "..." }
+
+-- Cooldown serveur (anti-spam réel)
+local lastSendAt = {}              -- [src] = GetGameTimer()
+
 local WhitelistedDiscords = {
     ['173099931614052352'] = true, -- Shleidja
-    ['205165653257093120'] = true -- Qidou
+    ['205165653257093120'] = true, -- Qidou
+    ['258347959131832320'] = true -- NekoLuna
 }
 
 local function isPlayerAuthorized(source)
@@ -44,24 +58,98 @@ local function encodeBase64(data)
 end
 
 -- ==========================================================
+-- Utilitaires (validation & sécurité)
+-- ==========================================================
+local function trim(s)
+    return (s:gsub('^%s+', ''):gsub('%s+$', ''))
+end
+
+local function sanitizeText(text)
+    if type(text) ~= 'string' then return nil end
+    -- Pas de multi-lignes / contrôles
+    text = text:gsub('[\r\n\t]', ' ')
+    text = trim(text)
+    if text == '' then return nil end
+    if #text > MAX_TEXT_LEN then
+        text = text:sub(1, MAX_TEXT_LEN)
+    end
+    return text
+end
+
+local function clampRadius(r)
+    r = tonumber(r) or 7.0
+    if r < MIN_RADIUS then r = MIN_RADIUS end
+    if r > MAX_RADIUS then r = MAX_RADIUS end
+    return r
+end
+
+local function isOnCooldown(src)
+    local now = GetGameTimer()
+    local last = lastSendAt[src] or 0
+    if now - last < COOLDOWN_MS then
+        return true
+    end
+    lastSendAt[src] = now
+    return false
+end
+
+AddEventHandler('playerDropped', function()
+    local src = source
+    lastSendAt[src] = nil
+end)
+
+-- ==========================================================
 -- Événements Réseau
 -- ==========================================================
 RegisterNetEvent('shl_tts:send', function(text, x, y, z, voiceRange)
     local src = source
     if not isPlayerAuthorized(src) then return end
+    if isOnCooldown(src) then return end
 
     local senderName = GetPlayerName(src)
-    local senderCoords = vector3(x, y, z)
-    local radius = voiceRange or 7.0
+    local cleanedText = sanitizeText(text)
+    if not cleanedText then return end
+
+    -- Ne pas faire confiance aux coords/range client
+    local senderPed = GetPlayerPed(src)
+    if not senderPed or senderPed == 0 or not DoesEntityExist(senderPed) then return end
+    local senderCoords = GetEntityCoords(senderPed)
+    local radius = clampRadius(voiceRange)
     
     --print(('[shl_tts] TTS de %s | Distance: %sm'):format(senderName, radius))
 
     -- Construction de l'URL Google TTS
-    local encodedText = text:gsub("([^%w ])", function(c)
+    local encodedText = cleanedText:gsub("([^%w ])", function(c)
         return string.format("%%%02X", string.byte(c))
     end):gsub(" ", "%%20")
     
-    local url = ('https://translate.google.com/translate_tts?ie=UTF-8&tl=%s&client=tw-ob&q=%s&textlen=%s'):format(TTS_LANG, encodedText, #text)
+    local url = ('https://translate.google.com/translate_tts?ie=UTF-8&tl=%s&client=tw-ob&q=%s&textlen=%s'):format(TTS_LANG, encodedText, #cleanedText)
+
+    local cacheKey = ('%s|%s'):format(TTS_LANG, encodedText)
+    local now = GetGameTimer()
+    local cached = ttsCache[cacheKey]
+    if cached and (now - cached.ts) <= CACHE_TTL_MS and cached.audioBase64 and cached.audioBase64 ~= '' then
+        -- Envoyer l'audio à l'émetteur
+        TriggerClientEvent('shl_tts:playAudio', src, cached.audioBase64, 1.0, senderName, src)
+
+        -- Diffuser l'audio aux joueurs proches
+        for _, playerId in ipairs(GetPlayers()) do
+            local targetId = tonumber(playerId)
+            if targetId and targetId ~= src then
+                local targetPed = GetPlayerPed(targetId)
+                if targetPed and DoesEntityExist(targetPed) then
+                    local targetCoords = GetEntityCoords(targetPed)
+                    local distance = #(senderCoords - targetCoords)
+
+                    if distance <= radius then
+                        local volume = math.max(0.05, 1.0 - (distance / radius))
+                        TriggerClientEvent('shl_tts:playAudio', targetId, cached.audioBase64, volume, senderName, src)
+                    end
+                end
+            end
+        end
+        return
+    end
 
     -- Requête HTTP côté serveur pour récupérer l'audio (évite les problèmes CORS du côté client)
     PerformHttpRequest(url, function(statusCode, responseData, headers)
@@ -71,9 +159,10 @@ RegisterNetEvent('shl_tts:send', function(text, x, y, z, voiceRange)
         end
 
         local audioBase64 = encodeBase64(responseData)
+        ttsCache[cacheKey] = { ts = GetGameTimer(), audioBase64 = audioBase64 }
 
         -- Envoyer l'audio à l'émetteur (volume max, c'est le client qui décide s'il le joue)
-        TriggerClientEvent('shl_tts:playAudio', src, audioBase64, 1.0, senderName)
+        TriggerClientEvent('shl_tts:playAudio', src, audioBase64, 1.0, senderName, src)
 
         -- Diffuser l'audio aux joueurs proches
         for _, playerId in ipairs(GetPlayers()) do
@@ -87,7 +176,7 @@ RegisterNetEvent('shl_tts:send', function(text, x, y, z, voiceRange)
                     if distance <= radius then
                         -- Calcul de l'atténuation du volume en fonction de la distance
                         local volume = math.max(0.05, 1.0 - (distance / radius))
-                        TriggerClientEvent('shl_tts:playAudio', targetId, audioBase64, volume, senderName)
+                        TriggerClientEvent('shl_tts:playAudio', targetId, audioBase64, volume, senderName, src)
                     end
                 end
             end
@@ -116,8 +205,11 @@ RegisterNetEvent('shl_tts:stop', function(x, y, z, voiceRange)
     local src = source
     if not isPlayerAuthorized(src) then return end
 
-    local senderCoords = vector3(x, y, z)
-    local radius = voiceRange or 7.0
+    -- Ne pas faire confiance aux coords/range client
+    local senderPed = GetPlayerPed(src)
+    if not senderPed or senderPed == 0 or not DoesEntityExist(senderPed) then return end
+    local senderCoords = GetEntityCoords(senderPed)
+    local radius = clampRadius(voiceRange)
 
     for _, playerId in ipairs(GetPlayers()) do
         local targetId = tonumber(playerId)
@@ -134,3 +226,39 @@ RegisterNetEvent('shl_tts:stop', function(x, y, z, voiceRange)
         end
     end
 end)
+
+-- ==========================================================
+-- Commandes serveur (compat chat)
+-- ==========================================================
+RegisterCommand('tts', function(src, args)
+    if src == 0 then return end
+    if not isPlayerAuthorized(src) then return end
+    if not args or #args == 0 then
+        TriggerClientEvent('shl_tts:clientTogglePanel', src)
+        return
+    end
+    TriggerClientEvent('shl_tts:clientSendText', src, table.concat(args, ' '))
+end, false)
+
+RegisterCommand('ttsc', function(src)
+    if src == 0 then return end
+    if not isPlayerAuthorized(src) then return end
+    TriggerClientEvent('shl_tts:clientCloseOrStop', src)
+end, false)
+
+-- Alias au cas où /tts serait capturé par un autre système
+RegisterCommand('shltts', function(src, args)
+    if src == 0 then return end
+    if not isPlayerAuthorized(src) then return end
+    if not args or #args == 0 then
+        TriggerClientEvent('shl_tts:clientTogglePanel', src)
+        return
+    end
+    TriggerClientEvent('shl_tts:clientSendText', src, table.concat(args, ' '))
+end, false)
+
+RegisterCommand('shlttsc', function(src)
+    if src == 0 then return end
+    if not isPlayerAuthorized(src) then return end
+    TriggerClientEvent('shl_tts:clientCloseOrStop', src)
+end, false)

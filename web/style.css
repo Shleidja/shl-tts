@@ -1,6 +1,31 @@
 /* ========================================================== */
 /* Reset & Base                                                */
 /* ========================================================== */
+/* Design System ElixirRP */
+:root {
+    --elixir-violet: #5742a7;
+    --elixir-gold: #e8a361;
+
+    --bg-primary: rgba(25, 17, 60, 0.95);
+    --bg-secondary: #19113C;
+    --bg-card: rgba(35, 25, 75, 0.95);
+    --bg-card-hover: rgba(45, 35, 90, 0.98);
+
+    --text-primary: #ffffff;
+    --text-secondary: #d0d0d0;
+
+    --border-violet: rgba(87, 66, 167, 0.5);
+    --border-gold: rgba(232, 163, 97, 0.5);
+
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.6);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.7);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.8);
+
+    --success-color: #2ecc71;
+    --error-color: #e74c3c;
+    --warning-color: #f39c12;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -10,12 +35,19 @@
 body {
     background: transparent;
     overflow: hidden;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'DM Sans', sans-serif;
+    pointer-events: auto;
 }
 
 .hidden {
     display: none !important;
 }
+
+/* Scrollbars (ElixirRP) */
+*::-webkit-scrollbar { width: 8px; }
+*::-webkit-scrollbar-track { background: rgba(35, 25, 75, 0.6); border-radius: 10px; }
+*::-webkit-scrollbar-thumb { background: var(--elixir-violet); border-radius: 10px; }
+*::-webkit-scrollbar-thumb:hover { background: var(--elixir-gold); }
 
 /* ========================================================== */
 /* Panneau Principal TTS                                       */
@@ -23,24 +55,21 @@ body {
 #tts-panel {
     position: fixed;
     z-index: 9999;
-    animation: fadeIn 0.15s ease-out;
+    animation: fadeIn 0.35s ease-out;
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
+    from { opacity: 0; transform: translateY(-12px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .tts-container {
-    width: 420px;
-    background: rgb(18, 18, 28);
-    background-image: url('bg.png');
-    background-repeat: no-repeat;
-    background-position: center center;
-    background-size: 60%;
-    border: 1px solid rgba(100, 200, 255, 0.2);
+    width: 450px;
+    max-width: 92vw;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-violet);
     border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    box-shadow: var(--shadow-lg);
     overflow: hidden;
     position: relative;
 }
@@ -49,7 +78,10 @@ body {
     content: '';
     position: absolute;
     inset: 0;
-    background: rgba(18, 18, 28, 0.85);
+    background:
+        radial-gradient(1200px 500px at 10% 0%, rgba(87, 66, 167, 0.22), transparent 55%),
+        radial-gradient(1000px 420px at 90% 10%, rgba(232, 163, 97, 0.14), transparent 55%),
+        rgba(25, 17, 60, 0.88);
     z-index: 0;
     pointer-events: none;
 }
@@ -66,11 +98,12 @@ body {
     display: flex;
     align-items: center;
     padding: 12px 16px;
-    background: rgba(100, 200, 255, 0.06);
-    border-bottom: 1px solid rgba(100, 200, 255, 0.1);
+    background: rgba(87, 66, 167, 0.10);
+    border-bottom: 1px solid rgba(87, 66, 167, 0.22);
     gap: 8px;
     cursor: grab;
     user-select: none;
+    flex-wrap: nowrap;
 }
 
 .tts-header.dragging {
@@ -88,11 +121,18 @@ body {
 
 .tts-title {
     flex: 1;
-    font-size: 14px;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.9);
-    letter-spacing: 0.5px;
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: 'Cinzel', serif;
+    color: var(--elixir-gold);
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
     pointer-events: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Contrôle Vocale */
@@ -100,28 +140,30 @@ body {
     display: flex;
     align-items: center;
     gap: 6px;
-    background: rgba(100, 200, 255, 0.08);
-    border: 1px solid rgba(100, 200, 255, 0.15);
+    background: rgba(35, 25, 75, 0.9);
+    border: 1px solid rgba(87, 66, 167, 0.35);
     border-radius: 6px;
     padding: 4px 10px;
     cursor: pointer;
-    transition: all 0.15s;
+    transition: all 0.3s ease;
     font-size: 12px;
     font-weight: 600;
-    color: rgba(100, 200, 255, 0.85);
+    color: rgba(232, 163, 97, 0.95);
 }
 
 .tts-btn-voice:hover {
-    background: rgba(100, 200, 255, 0.18);
-    border-color: rgba(100, 200, 255, 0.3);
+    transform: translateY(-1px);
+    background: var(--bg-card-hover);
+    border-color: rgba(232, 163, 97, 0.35);
+    box-shadow: var(--shadow-sm);
 }
 
 .voice-range-value {
-    background: rgba(100, 200, 255, 0.15);
+    background: rgba(232, 163, 97, 0.16);
     padding: 1px 5px;
     border-radius: 3px;
     font-size: 11px;
-    color: rgba(100, 200, 255, 1);
+    color: rgba(232, 163, 97, 1);
 }
 
 /* Boutons Fenêtre */
@@ -148,17 +190,17 @@ body {
 .tts-btn-close {
     background: none;
     border: none;
-    color: rgba(255, 255, 255, 0.35);
+    color: rgba(255, 255, 255, 0.45);
     font-size: 16px;
     cursor: pointer;
     padding: 2px 6px;
     border-radius: 4px;
-    transition: all 0.15s;
+    transition: all 0.3s ease;
 }
 
 .tts-btn-close:hover {
-    color: rgba(255, 100, 100, 0.9);
-    background: rgba(255, 100, 100, 0.1);
+    color: rgba(255, 255, 255, 0.95);
+    background: rgba(231, 76, 60, 0.18);
 }
 
 /* ========================================================== */
@@ -170,24 +212,25 @@ body {
 
 #tts-input {
     width: 100%;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(100, 200, 255, 0.15);
+    background: rgba(35, 25, 75, 0.55);
+    border: 1px solid rgba(87, 66, 167, 0.35);
     border-radius: 8px;
     padding: 12px;
-    color: rgba(255, 255, 255, 0.9);
+    color: var(--text-primary);
     font-size: 14px;
     font-family: inherit;
     resize: none;
     outline: none;
-    transition: border-color 0.2s;
+    transition: all 0.3s ease;
 }
 
 #tts-input::placeholder {
-    color: rgba(255, 255, 255, 0.2);
+    color: rgba(208, 208, 208, 0.35);
 }
 
 #tts-input:focus {
-    border-color: rgba(100, 200, 255, 0.4);
+    border-color: rgba(232, 163, 97, 0.55);
+    box-shadow: 0 0 0 3px rgba(232, 163, 97, 0.14);
 }
 
 /* Ligne des Méta Informations */
@@ -202,7 +245,7 @@ body {
 
 .tts-char-count {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.2);
+    color: rgba(208, 208, 208, 0.45);
     margin-left: auto;
 }
 
@@ -211,7 +254,7 @@ body {
     position: relative;
     flex: 1;
     height: 16px;
-    background: rgba(255, 100, 100, 0.08);
+    background: rgba(87, 66, 167, 0.18);
     border-radius: 8px;
     overflow: hidden;
     margin-right: 12px;
@@ -220,7 +263,7 @@ body {
 
 .cooldown-fill {
     height: 100%;
-    background: rgba(255, 100, 100, 0.35);
+    background: linear-gradient(90deg, rgba(232, 163, 97, 0.25), rgba(232, 163, 97, 0.55));
     border-radius: 8px;
     width: 100%;
     transition: width 0.1s linear;
@@ -233,7 +276,7 @@ body {
     transform: translate(-50%, -50%);
     font-size: 10px;
     font-weight: 700;
-    color: rgba(255, 160, 160, 0.9);
+    color: rgba(255, 255, 255, 0.85);
     white-space: nowrap;
 }
 
@@ -253,7 +296,7 @@ body {
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.15s;
+    transition: all 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -265,13 +308,15 @@ body {
 }
 
 .tts-btn-send {
-    background: rgba(100, 200, 255, 0.15);
-    color: rgba(100, 200, 255, 0.95);
-    border: 1px solid rgba(100, 200, 255, 0.2);
+    background: rgba(35, 25, 75, 0.9);
+    color: rgba(232, 163, 97, 0.95);
+    border: 1px solid rgba(232, 163, 97, 0.35);
 }
 
 .tts-btn-send:hover {
-    background: rgba(100, 200, 255, 0.25);
+    transform: translateY(-2px);
+    background: var(--bg-card-hover);
+    box-shadow: var(--shadow-md);
 }
 
 .tts-btn-send.on-cooldown {
@@ -280,23 +325,27 @@ body {
 }
 
 .tts-btn-stop {
-    background: rgba(255, 100, 100, 0.12);
-    color: rgba(255, 100, 100, 0.95);
-    border: 1px solid rgba(255, 100, 100, 0.15);
+    background: rgba(231, 76, 60, 0.12);
+    color: rgba(231, 76, 60, 0.95);
+    border: 1px solid rgba(231, 76, 60, 0.25);
 }
 
 .tts-btn-stop:hover {
-    background: rgba(255, 100, 100, 0.22);
+    transform: translateY(-2px);
+    background: rgba(231, 76, 60, 0.20);
+    box-shadow: var(--shadow-md);
 }
 
 .tts-btn-prev {
-    background: rgba(255, 200, 100, 0.1);
-    color: rgba(255, 200, 100, 0.95);
-    border: 1px solid rgba(255, 200, 100, 0.15);
+    background: rgba(87, 66, 167, 0.16);
+    color: rgba(208, 208, 208, 0.95);
+    border: 1px solid rgba(87, 66, 167, 0.35);
 }
 
 .tts-btn-prev:hover {
-    background: rgba(255, 200, 100, 0.2);
+    transform: translateY(-2px);
+    background: rgba(87, 66, 167, 0.22);
+    box-shadow: var(--shadow-md);
 }
 
 /* ========================================================== */
@@ -304,7 +353,7 @@ body {
 /* ========================================================== */
 .tts-divider {
     height: 1px;
-    background: rgba(100, 200, 255, 0.08);
+    background: rgba(87, 66, 167, 0.22);
     margin: 0 16px;
 }
 
@@ -322,25 +371,27 @@ body {
 .tts-soundpad-title {
     font-size: 12px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.45);
+    color: rgba(208, 208, 208, 0.55);
     text-transform: uppercase;
     letter-spacing: 1px;
 }
 
 .tts-btn-add {
-    background: rgba(100, 255, 150, 0.1);
-    border: 1px solid rgba(100, 255, 150, 0.2);
-    color: rgba(100, 255, 150, 0.85);
+    background: rgba(232, 163, 97, 0.12);
+    border: 1px solid rgba(232, 163, 97, 0.35);
+    color: rgba(232, 163, 97, 0.9);
     font-size: 11px;
     font-weight: 600;
     padding: 4px 10px;
     border-radius: 6px;
     cursor: pointer;
-    transition: all 0.15s;
+    transition: all 0.3s ease;
 }
 
 .tts-btn-add:hover {
-    background: rgba(100, 255, 150, 0.2);
+    transform: translateY(-1px);
+    background: rgba(232, 163, 97, 0.20);
+    box-shadow: var(--shadow-sm);
 }
 
 /* Grille de Presets */
@@ -354,34 +405,23 @@ body {
     padding-right: 4px; /* Pour aérer la barre de scroll */
 }
 
-.tts-soundpad-grid::-webkit-scrollbar {
-    width: 4px;
-}
-
-.tts-soundpad-grid::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.tts-soundpad-grid::-webkit-scrollbar-thumb {
-    background: rgba(100, 200, 255, 0.15);
-    border-radius: 2px;
-}
-
 .soundpad-btn {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(35, 25, 75, 0.65);
+    border: 1px solid rgba(87, 66, 167, 0.35);
     border-radius: 8px;
     padding: 10px 8px;
     cursor: pointer;
-    transition: all 0.15s;
+    transition: all 0.3s ease;
     text-align: center;
     overflow: hidden;
     position: relative;
 }
 
 .soundpad-btn:hover {
-    background: rgba(100, 200, 255, 0.1);
-    border-color: rgba(100, 200, 255, 0.25);
+    transform: translateY(-2px);
+    background: var(--bg-card-hover);
+    border-color: rgba(232, 163, 97, 0.28);
+    box-shadow: var(--shadow-md);
 }
 
 .soundpad-btn:active {
@@ -392,7 +432,7 @@ body {
     display: block;
     font-size: 12px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.88);
     margin-bottom: 3px;
     white-space: nowrap;
     overflow: hidden;
@@ -402,7 +442,7 @@ body {
 .soundpad-btn-text {
     display: block;
     font-size: 10px;
-    color: rgba(255, 255, 255, 0.3);
+    color: rgba(208, 208, 208, 0.45);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -414,7 +454,7 @@ body {
     top: 3px;
     right: 3px;
     font-size: 10px;
-    color: rgba(255, 255, 255, 0.15);
+    color: rgba(208, 208, 208, 0.35);
     cursor: pointer;
     padding: 2px 4px;
     border-radius: 3px;
@@ -425,12 +465,12 @@ body {
 }
 
 .soundpad-btn:hover .soundpad-btn-edit {
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(232, 163, 97, 0.9);
 }
 
 .soundpad-btn-edit:hover {
-    color: rgba(100, 200, 255, 0.9) !important;
-    background: rgba(100, 200, 255, 0.15);
+    color: rgba(25, 17, 60, 0.95) !important;
+    background: rgba(232, 163, 97, 0.9);
 }
 
 .soundpad-empty-msg {
@@ -450,7 +490,8 @@ body {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
     z-index: 10000;
     display: flex;
     align-items: center;
@@ -465,10 +506,10 @@ body {
 
 .modal-box {
     width: 340px;
-    background: rgb(22, 22, 34);
-    border: 1px solid rgba(100, 200, 255, 0.2);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-violet);
     border-radius: 12px;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+    box-shadow: var(--shadow-lg);
     overflow: hidden;
 }
 
@@ -477,11 +518,14 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 12px 16px;
-    background: rgba(100, 200, 255, 0.06);
-    border-bottom: 1px solid rgba(100, 200, 255, 0.1);
+    background: rgba(87, 66, 167, 0.10);
+    border-bottom: 1px solid rgba(87, 66, 167, 0.22);
     font-size: 14px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.9);
+    color: var(--elixir-gold);
+    font-family: 'Cinzel', serif;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .modal-body {
@@ -492,7 +536,7 @@ body {
     display: block;
     font-size: 11px;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(208, 208, 208, 0.55);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 6px;
@@ -505,31 +549,32 @@ body {
 
 .modal-input {
     width: 100%;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(100, 200, 255, 0.15);
+    background: rgba(35, 25, 75, 0.55);
+    border: 1px solid rgba(87, 66, 167, 0.35);
     border-radius: 8px;
     padding: 10px 12px;
-    color: rgba(255, 255, 255, 0.9);
+    color: var(--text-primary);
     font-size: 13px;
     font-family: inherit;
     outline: none;
     resize: none;
-    transition: border-color 0.2s;
+    transition: all 0.3s ease;
 }
 
 .modal-input::placeholder {
-    color: rgba(255, 255, 255, 0.2);
+    color: rgba(208, 208, 208, 0.35);
 }
 
 .modal-input:focus {
-    border-color: rgba(100, 200, 255, 0.4);
+    border-color: rgba(232, 163, 97, 0.55);
+    box-shadow: 0 0 0 3px rgba(232, 163, 97, 0.14);
 }
 
 .modal-actions {
     display: flex;
     gap: 8px;
     padding: 12px 16px;
-    border-top: 1px solid rgba(100, 200, 255, 0.08);
+    border-top: 1px solid rgba(87, 66, 167, 0.22);
     align-items: center;
 }
 

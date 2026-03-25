@@ -8,6 +8,93 @@ local lastTtsUseTime = 0
 local isTtsPanelOpen = false
 local isAuthorized = false
 
+-- ==========================================================
+-- Animation & Indicateur (🗣️) pendant le TTS
+-- ==========================================================
+local localServerId = nil
+local isAudioPlaying = false
+local activeSpeakerServerId = nil
+local speakerIndicatorThreadRunning = false
+local endTtsPlayback -- forward declaration (utilisé avant définition)
+
+local function ensureLocalServerId()
+    if not localServerId then
+        localServerId = GetPlayerServerId(PlayerId())
+    end
+    return localServerId
+end
+
+local function startNotepadEmoteIfLocal(speakerServerId)
+    if not speakerServerId then return end
+    if speakerServerId ~= ensureLocalServerId() then return end
+    -- Elixir_Animation / DPEmotes : lance l'emote côté joueur (répliquée visuellement)
+    ExecuteCommand('e notepad')
+end
+
+local function stopEmoteIfLocal(speakerServerId)
+    if not speakerServerId then return end
+    if speakerServerId ~= ensureLocalServerId() then return end
+    -- On tente plusieurs commandes "cancel" selon les ressources (inoffensif si inconnues)
+    ExecuteCommand('e c')
+    ExecuteCommand('e cancel')
+    ExecuteCommand('emotecancel')
+end
+
+local function drawText3D(x, y, z, text)
+    SetDrawOrigin(x, y, z, 0)
+    SetTextScale(0.30, 0.30)
+    SetTextFont(4)
+    SetTextProportional(1)
+    SetTextColour(255, 255, 255, 215)
+    SetTextOutline()
+    SetTextCentre(1)
+    BeginTextCommandDisplayText('STRING')
+    AddTextComponentSubstringPlayerName(text)
+    EndTextCommandDisplayText(0.0, 0.0)
+    ClearDrawOrigin()
+end
+
+local function startSpeakerIndicatorThread()
+    if speakerIndicatorThreadRunning then return end
+    speakerIndicatorThreadRunning = true
+
+    CreateThread(function()
+        while isAudioPlaying and activeSpeakerServerId do
+            local player = GetPlayerFromServerId(activeSpeakerServerId)
+            if player ~= -1 then
+                local ped = GetPlayerPed(player)
+                if ped and DoesEntityExist(ped) then
+                    local coords = GetEntityCoords(ped)
+                    local headZ = coords.z + 1.05
+                    drawText3D(coords.x, coords.y, headZ, '🗣️')
+                end
+            end
+            Wait(0)
+        end
+
+        speakerIndicatorThreadRunning = false
+    end)
+end
+
+local function beginTtsPlaybackForSpeaker(speakerServerId)
+    -- stop précédent état si un nouveau TTS démarre
+    if isAudioPlaying then
+        endTtsPlayback()
+    end
+    isAudioPlaying = true
+    activeSpeakerServerId = speakerServerId
+    startNotepadEmoteIfLocal(speakerServerId)
+    startSpeakerIndicatorThread()
+end
+
+endTtsPlayback = function()
+    if not isAudioPlaying then return end
+    local speakerServerId = activeSpeakerServerId
+    isAudioPlaying = false
+    activeSpeakerServerId = nil
+    stopEmoteIfLocal(speakerServerId)
+end
+
 AddEventHandler('onClientResourceStart', function (resourceName)
     if (GetCurrentResourceName() ~= resourceName) then return end
     TriggerServerEvent('shl_tts:requestAuth')
@@ -142,19 +229,24 @@ end)
 
 RegisterCommand('+openTTSPanel', requestOpenTtsPanel, false)
 RegisterCommand('-openTTSPanel', function() end, false)
-RegisterKeyMapping('+openTTSPanel', 'Ouvrir le menu TTS', 'keyboard', "F5")
+-- Pas de bind clavier par défaut : ouverture via /tts
 
+-- /tts : ouvre/ferme le menu si aucun argument, sinon lit directement le texte
 RegisterCommand('tts', function(source, args)
-    if #args == 0 then
-        --TriggerEvent('chat:addMessage', { color = {255, 100, 100}, args = {'TTS', 'Usage: /tts [texte à lire]'} })
+    if not args or #args == 0 then
+        requestOpenTtsPanel()
         return
     end
     sendTtsMessage(table.concat(args, ' '))
 end, false)
 
+-- /ttsc : si le menu est ouvert -> le fermer, sinon stopper la lecture
 RegisterCommand('ttsc', function()
+    if isTtsPanelOpen then
+        requestOpenTtsPanel() -- toggle (fermeture)
+        return
+    end
     stopTtsMessage()
-    --TriggerEvent('chat:addMessage', { color = {255, 200, 100}, args = {'TTS', '⏹ TTS arrêté.'} })
 end, false)
 
 RegisterCommand('+stopTTS', function()
@@ -225,11 +317,42 @@ end)
 -- ==========================================================
 -- Événements Réseau
 -- ==========================================================
-RegisterNetEvent('shl_tts:playAudio', function(audioBase64, volume, senderName)
+RegisterNetEvent('shl_tts:playAudio', function(audioBase64, volume, senderName, speakerServerId)
+    beginTtsPlaybackForSpeaker(speakerServerId)
     SendNUIMessage({ type = 'playAudio', audio = audioBase64, volume = volume })
     --TriggerEvent('chat:addMessage', { color = {100, 200, 255}, args = {('TTS [%s]'):format(senderName), '🔊'} })
 end)
 
 RegisterNetEvent('shl_tts:stopAudio', function()
     SendNUIMessage({ type = 'stopAudio' })
+    endTtsPlayback()
+end)
+
+RegisterNUICallback('audioEnded', function(data, cb)
+    endTtsPlayback()
+    cb('ok')
+end)
+
+-- ==========================================================
+-- Compat commandes chat (serveur -> client)
+-- Certains chats exécutent les commandes côté serveur uniquement.
+-- ==========================================================
+RegisterNetEvent('shl_tts:clientSendText', function(text)
+    sendTtsMessage(text)
+end)
+
+RegisterNetEvent('shl_tts:clientStop', function()
+    stopTtsMessage()
+end)
+
+RegisterNetEvent('shl_tts:clientTogglePanel', function()
+    requestOpenTtsPanel()
+end)
+
+RegisterNetEvent('shl_tts:clientCloseOrStop', function()
+    if isTtsPanelOpen then
+        requestOpenTtsPanel()
+    else
+        stopTtsMessage()
+    end
 end)
