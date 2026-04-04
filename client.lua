@@ -216,14 +216,15 @@ local function requestOpenTtsPanel()
     end
 end
 
-RegisterNetEvent('shl_tts:openPanel', function()
+RegisterNetEvent('shl_tts:openPanel', function(maxLen)
     isTtsPanelOpen = true
     SetNuiFocus(true, true)
     SetNuiFocusKeepInput(true)
     SendNUIMessage({
         type = 'openPanel',
         voiceRange = getPlayerVoiceDistance(),
-        voiceMode = getPlayerVoiceMode()
+        voiceMode = getPlayerVoiceMode(),
+        maxLen = maxLen or 250
     })
 end)
 

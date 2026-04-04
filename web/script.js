@@ -133,6 +133,20 @@
     }
 
     applyLockState();
+ 
+    function updateMaxTextLen(maxLen) {
+        const ttsInput = document.getElementById('tts-input');
+        const presetText = document.getElementById('preset-text');
+        const charCount = document.getElementById('char-count');
+        
+        if (ttsInput) ttsInput.setAttribute('maxlength', maxLen);
+        if (presetText) presetText.setAttribute('maxlength', maxLen);
+        
+        // Update the "0/500" part by changing the text after the span
+        if (charCount && charCount.nextSibling) {
+            charCount.nextSibling.textContent = '/' + maxLen;
+        }
+    }
 
     lockButton.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -468,6 +482,7 @@
                 updateVoiceInterface(data.voiceMode, data.voiceRange);
                 applyPanelPosition();
                 renderSoundpadGrid();
+                if (data.maxLen) updateMaxTextLen(data.maxLen);
                 uiPanel.classList.remove('hidden');
                 break;
             case 'closePanel':

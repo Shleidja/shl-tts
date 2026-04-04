@@ -5,7 +5,7 @@ local TTS_LANG = 'fr'
 
 -- Anti-abus & garde-fous (serveur)
 local COOLDOWN_MS = 2500           -- doit matcher côté client, mais c'est le serveur qui tranche
-local MAX_TEXT_LEN = 250           -- 500 côté NUI, mais on borne pour limiter charge/bande passante
+local MAX_TEXT_LEN = 200           -- Limite de l'API Google TTS (client=tw-ob)
 local MIN_RADIUS = 1.5
 local MAX_RADIUS = 25.0            -- borne "raisonnable" (évite un broadcast serveur-wide)
 
@@ -195,7 +195,7 @@ end)
 RegisterNetEvent('shl_tts:requestOpen', function()
     local src = source
     if isPlayerAuthorized(src) then
-        TriggerClientEvent('shl_tts:openPanel', src)
+        TriggerClientEvent('shl_tts:openPanel', src, MAX_TEXT_LEN)
     else
         TriggerClientEvent('chat:addMessage', src, { color = {255, 100, 100}, args = {'TTS', 'Vous n\'avez pas la permission d\'ouvrir le menu TTS.'} })
     end
