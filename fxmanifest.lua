@@ -11,7 +11,6 @@ files {
     'web/index.html',
     'web/script.js',
     'web/style.css',
-    -- 'web/bg.png' -- supprimé (fichier absent)
 }
 
 server_scripts {
